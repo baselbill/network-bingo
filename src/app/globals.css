@@ -1,0 +1,39 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+}
+
+body {
+  @apply bg-slate-50 text-slate-900;
+}
+
+/* ---- Print styles ---- */
+@media print {
+  @page {
+    size: auto;
+    margin: 12mm;
+  }
+
+  /* Hide everything that is not part of the printable card sheet. */
+  .no-print {
+    display: none !important;
+  }
+
+  body {
+    background: #fff;
+  }
+
+  /* One card per printed page. */
+  .print-card {
+    page-break-after: always;
+    break-after: page;
+  }
+
+  .print-card:last-child {
+    page-break-after: auto;
+    break-after: auto;
+  }
+}

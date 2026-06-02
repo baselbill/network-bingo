@@ -33,11 +33,19 @@ export function BingoCard({ card, title, label }: Props) {
                 "flex aspect-square items-center justify-center rounded border p-1 text-center leading-tight",
                 "text-[10px] sm:text-[11px]",
                 isFree
-                  ? "border-slate-400 bg-slate-800 font-bold uppercase tracking-wide text-white"
+                  ? "border-amber-300 bg-amber-50 font-bold text-amber-700"
                   : "border-slate-300 bg-white text-slate-800",
               ].join(" ")}
             >
-              <span className="line-clamp-6">{cell}</span>
+              {isFree ? (
+                <span className="flex flex-col items-center gap-0.5 uppercase tracking-wide">
+                  <span className="text-base leading-none">★</span>
+                  <span>Free</span>
+                  <span>Space</span>
+                </span>
+              ) : (
+                <span className="line-clamp-6">{cell}</span>
+              )}
             </div>
           );
         })}

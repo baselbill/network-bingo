@@ -7,8 +7,9 @@ export const REQUIRED_FACTS = CELL_COUNT - 1; // 24 (center is FREE SPACE)
 
 export type BingoCard = {
   id: string;
-  // Always CELL_COUNT entries, row-major. cells[CENTER_INDEX] === FREE_SPACE.
+  // Always CELL_COUNT entries, row-major. cells[freeSpaceIndex] === FREE_SPACE.
   cells: string[];
+  freeSpaceIndex: number;
 };
 
 export class NotEnoughFactsError extends Error {
@@ -20,7 +21,7 @@ export class NotEnoughFactsError extends Error {
   }
 }
 
-/** Returns a new array shuffled with the Fisher–Yates algorithm. */
+/** Returns a new array shuffled with the Fisher-Yates algorithm. */
 export function shuffle<T>(input: T[]): T[] {
   const arr = input.slice();
   for (let i = arr.length - 1; i > 0; i--) {
@@ -30,20 +31,29 @@ export function shuffle<T>(input: T[]): T[] {
   return arr;
 }
 
-/** Builds a single card layout from a fact pool (FREE SPACE pinned to center). */
-function buildCard(facts: string[], id: string): BingoCard {
+/** Builds a single card layout from a fact pool. */
+function buildCard(
+  facts: string[],
+  id: string,
+  freeSpaceIndex: number,
+): BingoCard {
   const picked = shuffle(facts).slice(0, REQUIRED_FACTS);
   const cells: string[] = [];
   for (let i = 0; i < CELL_COUNT; i++) {
-    if (i === CENTER_INDEX) {
+    if (i === freeSpaceIndex) {
       cells.push(FREE_SPACE);
     } else {
-      // Pull from picked, skipping the slot reserved for the center.
-      cells.push(picked[i < CENTER_INDEX ? i : i - 1]);
+      // Pull from picked, skipping the slot reserved for free space.
+      cells.push(picked[i < freeSpaceIndex ? i : i - 1]);
     }
   }
-  return { id, cells };
+  return { id, cells, freeSpaceIndex };
 }
+
+export type GenerateOptions = {
+  /** When true, FREE SPACE is placed at a random cell instead of the center. */
+  randomizeFreeSpace?: boolean;
+};
 
 export type GenerateResult = {
   cards: BingoCard[];
@@ -53,12 +63,15 @@ export type GenerateResult = {
 
 /**
  * Generates `count` bingo cards. Each card is a 5x5 grid with FREE SPACE in the
- * center; the remaining 24 cells are a random selection/arrangement of `facts`.
- * Cards are guaranteed unique up to a capped number of retries — if the fact
- * pool is too small to yield `count` distinct layouts, as many unique cards as
- * possible are returned along with a warning.
+ * center (or at a random position when `randomizeFreeSpace` is set). The
+ * remaining 24 cells are a random selection/arrangement of `facts`. Cards are
+ * guaranteed unique up to a capped number of retries.
  */
-export function generateCards(facts: string[], count: number): GenerateResult {
+export function generateCards(
+  facts: string[],
+  count: number,
+  options: GenerateOptions = {},
+): GenerateResult {
   const pool = facts.filter((f) => f.trim().length > 0 && f !== FREE_SPACE);
   if (pool.length < REQUIRED_FACTS) {
     throw new NotEnoughFactsError(pool.length);
@@ -72,8 +85,11 @@ export function generateCards(facts: string[], count: number): GenerateResult {
 
   while (cards.length < safeCount && attempts < maxAttempts) {
     attempts++;
-    const card = buildCard(pool, `card-${cards.length + 1}`);
-    const key = card.cells.join("");
+    const freeIdx = options.randomizeFreeSpace
+      ? Math.floor(Math.random() * CELL_COUNT)
+      : CENTER_INDEX;
+    const card = buildCard(pool, `card-${cards.length + 1}`, freeIdx);
+    const key = card.cells.join("|");
     if (seen.has(key)) continue;
     seen.add(key);
     cards.push(card);

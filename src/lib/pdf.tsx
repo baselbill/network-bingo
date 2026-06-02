@@ -52,10 +52,11 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   freeCell: {
-    backgroundColor: "#1e293b",
+    backgroundColor: "#fefce8",
+    borderColor: "#fcd34d",
   },
   freeText: {
-    color: "#fff",
+    color: "#92400e",
     fontFamily: "Helvetica-Bold",
     fontSize: 8,
     textAlign: "center",

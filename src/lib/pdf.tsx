@@ -10,6 +10,11 @@ import {
 } from "@react-pdf/renderer";
 import { FREE_SPACE } from "@/data/facts";
 import { GRID_SIZE, type BingoCard } from "@/lib/bingo";
+import { DEFAULT_FACT_FONT_SIZE } from "@/components/BingoCard";
+
+// The HTML preview uses px; the PDF uses pt on a smaller A4 grid. Scale the
+// configured px size down so the two stay visually consistent.
+const PDF_FONT_SCALE = 0.7;
 
 const styles = StyleSheet.create({
   page: {
@@ -20,7 +25,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "flex-end",
-    marginBottom: 12,
+    marginBottom: 10,
   },
   title: {
     fontSize: 18,
@@ -29,6 +34,26 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 9,
     color: "#666",
+  },
+  writeIn: {
+    flexDirection: "row",
+    gap: 24,
+    marginBottom: 12,
+  },
+  writeInField: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "flex-end",
+  },
+  writeInLabel: {
+    fontSize: 10,
+    fontFamily: "Helvetica-Bold",
+    marginRight: 4,
+  },
+  writeInLine: {
+    flex: 1,
+    borderBottom: "1pt solid #94a3b8",
+    height: 12,
   },
   grid: {
     flexDirection: "column",
@@ -52,10 +77,11 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   freeCell: {
-    backgroundColor: "#1e293b",
+    backgroundColor: "#fefce8",
+    borderColor: "#fcd34d",
   },
   freeText: {
-    color: "#fff",
+    color: "#92400e",
     fontFamily: "Helvetica-Bold",
     fontSize: 8,
     textAlign: "center",
@@ -73,17 +99,30 @@ function CardPage({
   card,
   title,
   label,
+  factFontSize,
 }: {
   card: BingoCard;
   title?: string;
   label: string;
+  factFontSize: number;
 }) {
   const rows = chunk(card.cells, GRID_SIZE);
+  const cellFontSize = factFontSize * PDF_FONT_SCALE;
   return (
     <Page size="A4" style={styles.page}>
       <View style={styles.header}>
         <Text style={styles.title}>{title || "Network Bingo"}</Text>
         <Text style={styles.label}>{label}</Text>
+      </View>
+      <View style={styles.writeIn}>
+        <View style={styles.writeInField}>
+          <Text style={styles.writeInLabel}>Name:</Text>
+          <View style={styles.writeInLine} />
+        </View>
+        <View style={styles.writeInField}>
+          <Text style={styles.writeInLabel}>Team:</Text>
+          <View style={styles.writeInLine} />
+        </View>
       </View>
       <View style={styles.grid}>
         {rows.map((row, r) => (
@@ -95,7 +134,13 @@ function CardPage({
                   key={c}
                   style={isFree ? [styles.cell, styles.freeCell] : styles.cell}
                 >
-                  <Text style={isFree ? styles.freeText : styles.cellText}>
+                  <Text
+                    style={
+                      isFree
+                        ? styles.freeText
+                        : [styles.cellText, { fontSize: cellFontSize }]
+                    }
+                  >
                     {cell}
                   </Text>
                 </View>
@@ -111,9 +156,11 @@ function CardPage({
 function BingoDocument({
   cards,
   title,
+  factFontSize,
 }: {
   cards: BingoCard[];
   title?: string;
+  factFontSize: number;
 }) {
   return (
     <Document title={title || "Network Bingo"}>
@@ -123,6 +170,7 @@ function BingoDocument({
           card={card}
           title={title}
           label={`Card ${i + 1} of ${cards.length}`}
+          factFontSize={factFontSize}
         />
       ))}
     </Document>
@@ -130,9 +178,13 @@ function BingoDocument({
 }
 
 /** Builds the PDF and triggers a browser download. */
-export async function downloadCardsPdf(cards: BingoCard[], title?: string) {
+export async function downloadCardsPdf(
+  cards: BingoCard[],
+  title?: string,
+  factFontSize: number = DEFAULT_FACT_FONT_SIZE,
+) {
   const blob = await pdf(
-    <BingoDocument cards={cards} title={title} />,
+    <BingoDocument cards={cards} title={title} factFontSize={factFontSize} />,
   ).toBlob();
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");

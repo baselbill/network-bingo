@@ -2,11 +2,15 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { BingoCard } from "@/components/BingoCard";
+import { BingoCard, DEFAULT_FACT_FONT_SIZE } from "@/components/BingoCard";
 import { STORAGE_KEYS } from "@/lib/storage";
 import type { BingoCard as BingoCardType } from "@/lib/bingo";
 
-type StoredCards = { title: string; cards: BingoCardType[] };
+type StoredCards = {
+  title: string;
+  cards: BingoCardType[];
+  factFontSize?: number;
+};
 
 export default function PrintPage() {
   const [data, setData] = useState<StoredCards | null>(null);
@@ -74,6 +78,7 @@ export default function PrintPage() {
               card={card}
               title={data.title}
               label={`Card ${i + 1} of ${data.cards.length}`}
+              factFontSize={data.factFontSize ?? DEFAULT_FACT_FONT_SIZE}
             />
           </div>
         ))}

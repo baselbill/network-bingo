@@ -43,4 +43,6 @@ export const STORAGE_KEYS = {
   title: "bingo:title",
   cards: "bingo:generatedCards",
   randomizeFreeSpace: "bingo:randomizeFreeSpace",
+  fontSize: "bingo:factFontSize",
+  savedLists: "bingo:savedLists",
 } as const;

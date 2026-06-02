@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { FactSelector } from "@/components/FactSelector";
-import { BingoCard } from "@/components/BingoCard";
+import { BingoCard, DEFAULT_FACT_FONT_SIZE } from "@/components/BingoCard";
 import { SEED_FACTS } from "@/data/facts";
 import {
   generateCards,
@@ -30,6 +30,10 @@ export default function Home() {
   const [count, setCount] = usePersistentState<number>(STORAGE_KEYS.count, 20);
   const [randomizeFreeSpace, setRandomizeFreeSpace] =
     usePersistentState<boolean>(STORAGE_KEYS.randomizeFreeSpace, false);
+  const [factFontSize, setFactFontSize] = usePersistentState<number>(
+    STORAGE_KEYS.fontSize,
+    DEFAULT_FACT_FONT_SIZE,
+  );
 
   const [cards, setCards] = useState<BingoCardType[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -47,7 +51,7 @@ export default function Home() {
       try {
         window.localStorage.setItem(
           STORAGE_KEYS.cards,
-          JSON.stringify({ title, cards: result.cards }),
+          JSON.stringify({ title, cards: result.cards, factFontSize }),
         );
       } catch {
         // Non-fatal: print view simply won't have pre-stored cards.
@@ -67,7 +71,7 @@ export default function Home() {
     if (cards.length === 0) return;
     setPdfBusy(true);
     try {
-      await downloadCardsPdf(cards, title);
+      await downloadCardsPdf(cards, title, factFontSize);
     } catch {
       setError("Failed to build the PDF. Please try again.");
     } finally {
@@ -163,6 +167,29 @@ export default function Home() {
             </span>
           </label>
 
+          <div className="mt-4">
+            <label className="flex flex-col text-sm">
+              <span className="mb-1 font-medium text-slate-700">
+                Fact font size on printout:{" "}
+                <span className="font-normal text-slate-500">
+                  {factFontSize}px
+                </span>
+              </span>
+              <input
+                type="range"
+                min={7}
+                max={16}
+                step={1}
+                value={factFontSize}
+                onChange={(e) => setFactFontSize(Number(e.target.value))}
+                className="w-64 accent-indigo-600"
+              />
+            </label>
+            <p className="mt-1 text-xs text-slate-400">
+              Larger text is easier to read; smaller text fits longer facts.
+            </p>
+          </div>
+
           {!canGenerate && (
             <p className="mt-3 text-sm text-amber-700">
               Select at least {REQUIRED_FACTS} facts to generate a 5x5 card.
@@ -198,7 +225,12 @@ export default function Home() {
             <p className="mb-4 text-sm text-slate-600">
               Preview of the first card:
             </p>
-            <BingoCard card={cards[0]} title={title} label="Card 1 preview" />
+            <BingoCard
+              card={cards[0]}
+              title={title}
+              label="Card 1 preview"
+              factFontSize={factFontSize}
+            />
           </section>
         )}
       </div>
